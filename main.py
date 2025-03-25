@@ -5,6 +5,7 @@ spell-checker:ignore tavily
 """
 
 from os import getenv
+import sqlite3
 from typing import Annotated, TypedDict
 import yfinance as yf
 from langchain.tools import Tool
@@ -82,7 +83,8 @@ graph_builder.add_conditional_edges(
 graph_builder.add_edge("tools", "chatbot")
 graph_builder.set_entry_point("chatbot")
 
-memory = MemorySaver()
+connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
+memory = SqliteSaver(connection)
 graph = graph_builder.compile(checkpointer=memory)
 
 def stream_graph_updates(user_input_: str):
@@ -99,6 +101,7 @@ if __name__ == "__main__":
         user_input = input("User: ")
         if user_input.lower() in ["quit", "exit", "q"]:
             print("Goodbye!")
+            connection.close()
             break
 
         stream_graph_updates(user_input)
