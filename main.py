@@ -4,18 +4,17 @@ This is the LangGraph tutorial code
 spell-checker:ignore tavily
 """
 
-from os import getenv
 import sqlite3
+from os import getenv
 from typing import Annotated, TypedDict
+
 import yfinance as yf
 from langchain.tools import Tool
 
-from langchain_openai import ChatOpenAI
 # from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_community.tools import YahooFinanceNewsTool
-from langgraph.checkpoint.memory import MemorySaver
+from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.sqlite import SqliteSaver
-
 from langgraph.graph import StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -23,7 +22,9 @@ from langgraph.prebuilt import ToolNode, tools_condition
 
 class State(TypedDict):
     """State of the graph"""
+
     messages: Annotated[list, add_messages]
+
 
 # tavily_tool = TavilySearchResults(max_results=2)
 
@@ -35,16 +36,17 @@ def get_stock_price(symbol: str) -> str:
     """Retrieve the current stock price for a given stock symbol."""
     try:
         ticker = yf.Ticker(symbol)
-        current_price = ticker.info['currentPrice']
+        current_price = ticker.info["currentPrice"]
         return f"The current price of {symbol} is ${current_price:.2f}"
     except Exception as e:
         return f"Error retrieving stock price for {symbol}: {str(e)}"
+
 
 # Create a Tool for stock price retrieval
 stock_price_tool = Tool(
     name="get_stock_price",
     func=get_stock_price,
-    description="Retrieves the current stock price for a given stock symbol"
+    description="Retrieves the current stock price for a given stock symbol",
 )
 
 # Update the tools list to include the new stock price tool
@@ -56,9 +58,9 @@ if not api_key:
 
 # OpenRouter docs: https://openrouter.ai/docs/overview/models
 llm = ChatOpenAI(
-  api_key=api_key,
-  openai_api_base="https://openrouter.ai/api/v1",
-  model_name="anthropic/claude-3.5-haiku" #"mistralai/mistral-small-3.1-24b-instruct:free"
+    api_key=api_key,
+    openai_api_base="https://openrouter.ai/api/v1",
+    model_name="anthropic/claude-3.5-haiku",  # "mistralai/mistral-small-3.1-24b-instruct:free"
 )
 
 llm_with_tools = llm.bind_tools(tools)
@@ -67,6 +69,7 @@ llm_with_tools = llm.bind_tools(tools)
 def chatbot(state: State):
     """Invoke the chatbot"""
     return {"messages": [llm_with_tools.invoke(state["messages"])]}
+
 
 graph_builder = StateGraph(State)
 
@@ -87,16 +90,19 @@ connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
 memory = SqliteSaver(connection)
 graph = graph_builder.compile(checkpointer=memory)
 
+
 def stream_graph_updates(user_input_: str):
     """Display the chatbot's response in real-time."""
     for event in graph.stream(
         {"messages": [{"role": "user", "content": user_input_}]},
-        config={"thread_id": 1}):
+        config={"thread_id": 1},
+    ):
         for value in event.values():
             print("Assistant:", value["messages"][-1].content)
 
+
 if __name__ == "__main__":
-    
+
     while True:
         user_input = input("User: ")
         if user_input.lower() in ["quit", "exit", "q"]:
