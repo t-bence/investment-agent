@@ -4,13 +4,14 @@ This is the LangGraph tutorial code
 spell-checker:ignore tavily
 """
 
-# import sqlite3
-
+import sqlite3
 from typing import Annotated, TypedDict
 
-from langgraph.checkpoint.memory import InMemorySaver
+import streamlit as st
+from langchain_core.messages import AIMessage, HumanMessage
 
-# from langgraph.checkpoint.sqlite import SqliteSaver
+# from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
@@ -37,10 +38,12 @@ graph_builder.add_conditional_edges(
 graph_builder.add_edge("tools", "chatbot")
 graph_builder.set_entry_point("chatbot")
 
-# connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
-# memory = SqliteSaver(connection)
-memory = InMemorySaver()
+connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
+memory = SqliteSaver(connection)
+# memory = InMemorySaver()
 graph = graph_builder.compile(checkpointer=memory)
+
+memory_config = {"configurable": {"thread_id": 1}}
 
 
 def stream_graph_updates(user_input_: str):
@@ -53,13 +56,28 @@ def stream_graph_updates(user_input_: str):
             print("Assistant:", value["messages"][-1].content)
 
 
-if __name__ == "__main__":
+st.title("Investment Chatbot")
 
-    while True:
-        user_input = input("User: ")
-        if user_input.lower() in ["quit", "exit", "q"]:
-            print("Goodbye!")
-            # connection.close()
-            break
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        AIMessage("Hello! I'm your investment assistant. How can I help you today?")
+    ]
 
-        stream_graph_updates(user_input)
+# Loop through all messages in the session state and render them as a chat on every st.refresh mech
+for msg in st.session_state.messages:
+    # https://docs.streamlit.io/develop/api-reference/chat/st.chat_message
+    # we store them as AIMessage and HumanMessage as its easier to send to LangGraph
+    if type(msg) == AIMessage:
+        st.chat_message("assistant").write(msg.content)
+    if type(msg) == HumanMessage:
+        st.chat_message("user").write(msg.content)
+
+# takes new input in chat box from user and invokes the graph
+if prompt := st.chat_input():
+    st.chat_message("user").markdown(prompt)
+
+    with st.chat_message("assistant"):
+        response = graph.invoke(
+            {"messages": [{"role": "user", "content": prompt}]}, config=memory_config
+        )
+        st.markdown(response["messages"][-1].content)
