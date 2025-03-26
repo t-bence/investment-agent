@@ -4,71 +4,23 @@ This is the LangGraph tutorial code
 spell-checker:ignore tavily
 """
 
-import sqlite3
-from os import getenv
+# import sqlite3
+
 from typing import Annotated, TypedDict
 
-import yfinance as yf
-from langchain.tools import Tool
+from langgraph.checkpoint.memory import InMemorySaver
 
-# from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain_community.tools import YahooFinanceNewsTool
-from langchain_openai import ChatOpenAI
-from langgraph.checkpoint.sqlite import SqliteSaver
+# from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph
-from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode, tools_condition
 
+from lib.llm import get_chatbot
+from lib.state import State
+from lib.tools import get_tools
 
-class State(TypedDict):
-    """State of the graph"""
+tools = get_tools()
 
-    messages: Annotated[list, add_messages]
-
-
-# tavily_tool = TavilySearchResults(max_results=2)
-
-yahoo_tool = YahooFinanceNewsTool()
-
-
-# Define a function to retrieve stock price
-def get_stock_price(symbol: str) -> str:
-    """Retrieve the current stock price for a given stock symbol."""
-    try:
-        ticker = yf.Ticker(symbol)
-        current_price = ticker.info["currentPrice"]
-        return f"The current price of {symbol} is ${current_price:.2f}"
-    except Exception as e:
-        return f"Error retrieving stock price for {symbol}: {str(e)}"
-
-
-# Create a Tool for stock price retrieval
-stock_price_tool = Tool(
-    name="get_stock_price",
-    func=get_stock_price,
-    description="Retrieves the current stock price for a given stock symbol",
-)
-
-# Update the tools list to include the new stock price tool
-tools = [stock_price_tool]
-
-api_key = getenv("OPENROUTER_API_KEY")
-if not api_key:
-    raise ValueError("API key not set!")
-
-# OpenRouter docs: https://openrouter.ai/docs/overview/models
-llm = ChatOpenAI(
-    api_key=api_key,
-    openai_api_base="https://openrouter.ai/api/v1",
-    model_name="anthropic/claude-3.5-haiku",  # "mistralai/mistral-small-3.1-24b-instruct:free"
-)
-
-llm_with_tools = llm.bind_tools(tools)
-
-
-def chatbot(state: State):
-    """Invoke the chatbot"""
-    return {"messages": [llm_with_tools.invoke(state["messages"])]}
+chatbot = get_chatbot(tools)
 
 
 graph_builder = StateGraph(State)
@@ -86,8 +38,9 @@ graph_builder.add_conditional_edges(
 graph_builder.add_edge("tools", "chatbot")
 graph_builder.set_entry_point("chatbot")
 
-connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
-memory = SqliteSaver(connection)
+# connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
+# memory = SqliteSaver(connection)
+memory = InMemorySaver()
 graph = graph_builder.compile(checkpointer=memory)
 
 
@@ -107,7 +60,7 @@ if __name__ == "__main__":
         user_input = input("User: ")
         if user_input.lower() in ["quit", "exit", "q"]:
             print("Goodbye!")
-            connection.close()
+            # connection.close()
             break
 
         stream_graph_updates(user_input)
