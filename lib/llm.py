@@ -25,12 +25,8 @@ def get_chatbot(tools: List[Tool]) -> Callable[[State], Dict[str, list]]:
 
     def chatbot(state: State) -> Dict[str, list]:
         """Invoke the chatbot"""
-        messages = "\n\n".join(x.content for x in state["messages"])
-        input = [
-            {"role": "system", "content": ANALYST_PROMPT},
-            {"role": "user", "content": messages},
-        ]
-        response = [llm_with_tools.invoke(input)]
+
+        response = [llm_with_tools.invoke(state["messages"])]
         return {"messages": response}
 
     return chatbot

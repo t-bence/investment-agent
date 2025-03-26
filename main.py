@@ -22,7 +22,6 @@ tools = get_tools()
 
 chatbot = get_chatbot(tools)
 
-
 graph_builder = StateGraph(State)
 
 graph_builder.add_node("chatbot", chatbot)
