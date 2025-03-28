@@ -1,3 +1,5 @@
+import os
+
 import yfinance as yf
 from langchain.tools import Tool
 from langchain_community.tools import YahooFinanceNewsTool
@@ -6,14 +8,19 @@ from langchain_community.tools import YahooFinanceNewsTool
 
 # yahoo_tool = YahooFinanceNewsTool() # does not work
 
+os.environ["USER_AGENT"] = "AI Investment Agent"
+
 
 # Define a function to retrieve stock price
 def get_stock_price(symbol: str) -> str:
     """Retrieve the current stock price for a given stock symbol."""
     try:
         ticker = yf.Ticker(symbol)
-        # print(ticker.fast_info.last_price)
-        current_price = ticker.info["currentPrice"]
+        current_price = (
+            ticker.info["currentPrice"]
+            if "currentPrice" in ticker.info.keys()
+            else ticker.info["regularMarketPrice"]  # needed for ETFs
+        )
         return f"The current price of {symbol} is ${current_price:.2f}"
     except Exception as e:
         return f"Error retrieving stock price for {symbol}: {str(e)}"
@@ -29,3 +36,8 @@ stock_price_tool = Tool(
 
 def get_tools() -> list[Tool]:
     return [stock_price_tool]
+
+
+if __name__ == "__main__":
+    #    print(get_stock_price("AAPL"))
+    print(get_stock_price("CSPX.L"))

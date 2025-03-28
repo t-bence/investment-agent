@@ -1,4 +1,3 @@
-# from langchain_community.tools.tavily_search import TavilySearchResults
 from os import getenv
 from typing import Callable, Dict, List
 
@@ -18,7 +17,7 @@ def get_chatbot(tools: List[Tool]) -> Callable[[State], Dict[str, list]]:
     llm = ChatOpenAI(
         api_key=api_key,
         openai_api_base="https://openrouter.ai/api/v1",
-        model_name="anthropic/claude-3.5-haiku",  # "mistralai/mistral-small-3.1-24b-instruct:free"
+        model_name="anthropic/claude-3.5-haiku",
     )
 
     llm_with_tools = llm.bind_tools(tools)
