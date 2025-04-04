@@ -1,7 +1,8 @@
 import sqlite3
 
-# from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.memory import InMemorySaver
+
+# from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 
@@ -33,17 +34,18 @@ class InvestmentAgent:
         graph_builder.add_edge("tools", "chatbot")
         graph_builder.set_entry_point("chatbot")
 
-        connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
-        memory = SqliteSaver(connection)
+        # connection = sqlite3.connect("checkpoints.sqlite", check_same_thread=False)
+        # memory = SqliteSaver(connection)
+        memory = InMemorySaver()
         # memory = InMemorySaver()
         self.graph = graph_builder.compile(checkpointer=memory)
 
         self.memory_config = {"configurable": {"thread_id": 1}}
 
-    def invoke(self, prompt: str) -> str:
+    def invoke(self, prompt: str) -> list[str]:
         # Implement the logic to handle the prompt and return a response
         response = self.graph.invoke(
             {"messages": [{"role": "user", "content": prompt}]},
             config=self.memory_config,
         )
-        return response["messages"][-1].content
+        return [msg.content for msg in response["messages"]]

@@ -34,5 +34,6 @@ if prompt := st.chat_input():
 
     with st.chat_message("assistant"):
         response = agent.invoke(prompt)
-        st.markdown(response)
-        st.session_state.messages.append(AIMessage(content=response))
+        for msg in response:
+            st.markdown(msg)
+            st.session_state.messages.append(AIMessage(content=msg))

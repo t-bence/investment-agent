@@ -5,9 +5,13 @@ This is an experiment with LangGraph to create an agent that can answer question
 To run the agent with UI, use the following command:
 
 ```[bash]
-streamlit run investment-agent/main.py
+streamlit run investment-agent/gui.py
 ```
 
-Current issues:
+## Further ideas
+
+Create separate LLMs. There should be one positive and negative LLM. The positive LLM will answer questions about investments, while the negative LLM will answer questions about risks. Then there should be one that summarizes the concerns and gives a balanced response.
+
+## Current issues
 
 - There is no streaming.
