@@ -39,5 +39,4 @@ def get_tools() -> list[Tool]:
 
 
 if __name__ == "__main__":
-    #    print(get_stock_price("AAPL"))
     print(get_stock_price("CSPX.L"))

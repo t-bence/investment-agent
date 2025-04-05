@@ -3,12 +3,12 @@ from lib.graph import InvestmentAgent
 if __name__ == "__main__":
     agent = InvestmentAgent()
 
-    while True:
-        user_input = input("User: ")
-        if user_input.lower() in ["quit", "exit", "q"]:
-            print("Goodbye!")
-            break
+    initial_state = {
+        "messages": [],
+        "thesis": "I live in Hungary. I want to invest in all world ETFs to diversify my portfolio.",
+        "positive": "",
+        "negative": "",
+    }
 
-        messages = agent.invoke(user_input)
-        for message in messages:
-            print(f"Assistant: {message}")
+    message = agent.invoke(initial_state)
+    print(message)

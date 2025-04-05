@@ -7,3 +7,6 @@ class State(TypedDict):
     """State of the graph"""
 
     messages: Annotated[list, add_messages]
+    thesis: str
+    positive: str
+    negative: str

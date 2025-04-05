@@ -15,3 +15,5 @@ Create separate LLMs. There should be one positive and negative LLM. The positiv
 ## Current issues
 
 - There is no streaming.
+- The CLI works by displaying the last message, but I'm not sure it would work with interactive chat. 
+- The UI is not tested.
